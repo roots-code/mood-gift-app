@@ -1,21 +1,8 @@
-import React, { useState, useCallback, useEffect, Suspense } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import './App.css';
 import AIChatbot from './components/AIChatbot';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import { DatabaseService } from './services/DatabaseService';
-
-// Three.js Components (wrapped in try-catch for fallback)
-let ThreeDBackground, ThreeDCard, ThreeDMoodSelector;
-try {
-  ThreeDBackground = require('./components/ThreeDBackground').default;
-  ThreeDCard = require('./components/ThreeDCard').default;
-  ThreeDMoodSelector = require('./components/ThreeDMoodSelector').default;
-} catch (error) {
-  console.log('3D components not available, using 2D fallback');
-  ThreeDBackground = null;
-  ThreeDCard = null;
-  ThreeDMoodSelector = null;
-}
 
 // SVG Icons
 const HeartIcon = ({ size = 24, className = "" }) => (
@@ -180,21 +167,6 @@ const LoadingScreen = () => (
       <HeartIcon size={36} className="loading-heart" />
     </div>
     <p className="loading-text">Creating your pixel universe...</p>
-  </div>
-);
-
-// 3D Loading Component
-const ThreeDLoader = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '400px',
-    color: 'var(--pixel-primary)',
-    fontSize: '1.2rem',
-    fontFamily: 'var(--font-pixel)'
-  }}>
-    🎮 Loading 3D Universe...
   </div>
 );
 
@@ -526,16 +498,9 @@ export default function CosmicMoodApp() {
       <AdminHeader />
       <UserLogoutButton />
       
-      {/* 3D Background */}
-      {ThreeDBackground && (
-        <Suspense fallback={null}>
-          <ThreeDBackground currentMood={currentMood} />
-        </Suspense>
-      )}
-      
       <div className="cosmic-app">
         {!currentMood ? (
-          // Mood Selection Screen
+          // Mood Selection Screen - Using 2D Circular Selector
           <div className="cosmic-mood-selection">
             <div className="cosmic-header">
               <FlowerIcon size={40} className="cosmic-flower" />
@@ -550,53 +515,43 @@ export default function CosmicMoodApp() {
               </p>
             </div>
             
-            {/* 3D or 2D Mood Selector */}
-            {ThreeDMoodSelector ? (
-              <Suspense fallback={<ThreeDLoader />}>
-                <ThreeDMoodSelector 
-                  onMoodSelect={handleMoodSelect}
-                  selectedMood={currentMood}
-                />
-              </Suspense>
-            ) : (
-              // Fallback 2D Mood Selector
-              <div className="cosmic-circle-container">
-                <div className="cosmic-center">
-                  <div className="center-orb">
-                    <HeartIcon size={48} className="center-heart" />
-                  </div>
-                </div>
-                
-                <div className="mood-constellation">
-                  {moodData.map((mood, index) => {
-                    const angle = (360 / moodData.length) * index;
-                    return (
-                      <button
-                        key={mood.id}
-                        className="mood-planet"
-                        style={{
-                          '--angle': `${angle}deg`,
-                          '--color': mood.color
-                        }}
-                        onClick={() => handleMoodSelect(mood.id)}
-                      >
-                        <div className="planet-surface">
-                          <span className="planet-emoji">{mood.emoji}</span>
-                          <span className="planet-label">{mood.label}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
+            {/* 2D Circular Mood Selector */}
+            <div className="cosmic-circle-container">
+              <div className="cosmic-center">
+                <div className="center-orb">
+                  <HeartIcon size={48} className="center-heart" />
                 </div>
               </div>
-            )}
+              
+              <div className="mood-constellation">
+                {moodData.map((mood, index) => {
+                  const angle = (360 / moodData.length) * index;
+                  return (
+                    <button
+                      key={mood.id}
+                      className="mood-planet"
+                      style={{
+                        '--angle': `${angle}deg`,
+                        '--color': mood.color
+                      }}
+                      onClick={() => handleMoodSelect(mood.id)}
+                    >
+                      <div className="planet-surface">
+                        <span className="planet-emoji">{mood.emoji}</span>
+                        <span className="planet-label">{mood.label}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             
             <div className="cosmic-footer">
               <p>✨ {isAdmin ? 'Admin viewing pixel mood universe' : 'Across infinite pixels, love finds its way'} ✨</p>
             </div>
           </div>
         ) : (
-          // Mood Content Screen
+          // Mood Content Screen - Using 2D Cards
           <div className="cosmic-content">
             <div className="cosmic-nav">
               <button className="cosmic-back-btn" onClick={() => setCurrentMood(null)}>
@@ -612,84 +567,46 @@ export default function CosmicMoodApp() {
               </div>
             </div>
             
-            {/* Card Grid with 3D or 2D Cards */}
+            {/* 2D Card Grid */}
             <div className="cosmic-cards-galaxy" style={{
               display: 'grid',
-              gridTemplateColumns: ThreeDCard ? 'repeat(auto-fit, minmax(400px, 1fr))' : 'repeat(auto-fit, minmax(320px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
               gap: '2rem',
               marginBottom: '3rem'
             }}>
               
               {/* Message Card */}
-              {ThreeDCard ? (
-                <Suspense fallback={<ThreeDLoader />}>
-                  <ThreeDCard
-                    title="Cosmic Message"
-                    emoji="💎"
-                    color={moodColors[currentMood] || '#00D4FF'}
-                    content={
-                      <div>
-                        <p>{moodContent[currentMood]?.messages ? 
-                          utilityFunctions.getRandomItem(moodContent[currentMood].messages) : 
-                          "You are a beautiful soul radiating 3D pixel energy! ✨"
-                        }</p>
-                      </div>
-                    }
-                    onClick={() => console.log('3D Message card clicked!')}
-                  />
-                </Suspense>
-              ) : (
-                <div className="cosmic-card message-card" style={{'--card-index': 0}}>
-                  <div className="card-constellation">
-                    <HeartIcon size={32} className="constellation-icon" />
-                  </div>
-                  <h3 className="card-title" data-text="Pixel Message">Pixel Message</h3>
-                  <p className="card-message">
-                    {moodContent[currentMood]?.messages ? 
-                      utilityFunctions.getRandomItem(moodContent[currentMood].messages) : 
-                      "You are a beautiful soul radiating pixel energy! ✨"
-                    }
-                  </p>
-                  <div className="card-stars">
-                    <StarIcon size={12} />
-                    <StarIcon size={12} />
-                    <StarIcon size={12} />
-                  </div>
+              <div className="cosmic-card message-card" style={{'--card-index': 0}}>
+                <div className="card-constellation">
+                  <HeartIcon size={32} className="constellation-icon" />
                 </div>
-              )}
+                <h3 className="card-title" data-text="Pixel Message">Pixel Message</h3>
+                <p className="card-message">
+                  {moodContent[currentMood]?.messages ? 
+                    utilityFunctions.getRandomItem(moodContent[currentMood].messages) : 
+                    "You are a beautiful soul radiating pixel energy! ✨"
+                  }
+                </p>
+                <div className="card-stars">
+                  <StarIcon size={12} />
+                  <StarIcon size={12} />
+                  <StarIcon size={12} />
+                </div>
+              </div>
               
               {/* Task Card */}
-              {ThreeDCard ? (
-                <Suspense fallback={<ThreeDLoader />}>
-                  <ThreeDCard
-                    title="Soul Mission"
-                    emoji="🚀"
-                    color={moodColors[currentMood] || '#00F5A0'}
-                    content={
-                      <div>
-                        <p>{moodContent[currentMood]?.tasks ? 
-                          utilityFunctions.getRandomItem(moodContent[currentMood].tasks) : 
-                          "Take a moment to breathe deeply in this 3D space! 🌟"
-                        }</p>
-                      </div>
-                    }
-                    onClick={() => console.log('3D Task card clicked!')}
-                  />
-                </Suspense>
-              ) : (
-                <div className="cosmic-card task-card" style={{'--card-index': 1}}>
-                  <div className="card-constellation">
-                    <FlowerIcon size={32} className="constellation-icon" />
-                  </div>
-                  <h3 className="card-title" data-text="Soul Mission">Soul Mission</h3>
-                  <p className="card-message">
-                    {moodContent[currentMood]?.tasks ? 
-                      utilityFunctions.getRandomItem(moodContent[currentMood].tasks) : 
-                      "Take a moment to breathe deeply and appreciate this pixel moment! 🌟"
-                    }
-                  </p>
+              <div className="cosmic-card task-card" style={{'--card-index': 1}}>
+                <div className="card-constellation">
+                  <FlowerIcon size={32} className="constellation-icon" />
                 </div>
-              )}
+                <h3 className="card-title" data-text="Soul Mission">Soul Mission</h3>
+                <p className="card-message">
+                  {moodContent[currentMood]?.tasks ? 
+                    utilityFunctions.getRandomItem(moodContent[currentMood].tasks) : 
+                    "Take a moment to breathe deeply and appreciate this pixel moment! 🌟"
+                  }
+                </p>
+              </div>
               
               {/* Photo Card */}
               <div className="cosmic-card photo-card" style={{'--card-index': 2}}>
